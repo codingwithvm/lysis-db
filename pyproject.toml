@@ -1,0 +1,16 @@
+[tool.taskipy.tasks]
+dev = "uvicorn src.main:app --reload"
+install = "pip install -r requirements.txt"
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+extend-select = ["I"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
