@@ -34,8 +34,8 @@ API v1 – Processes
 
 ## Desenvolvimento
 Formatação de Código
-- lint:check `ruff check .`
-- lint:fix `ruff check --fix`
+- lint:check `task lintCheck`
+- lint:fix `task lintFix`
 
 Testes Automatizados
 - Rodar testes automatizados `task test`
