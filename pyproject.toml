@@ -1,6 +1,8 @@
 [tool.taskipy.tasks]
 dev = "uvicorn src.main:app --reload"
 install = "pip install -r requirements.txt"
+test = "set PYTHONPATH=src && python -m pytest -q src/tests/processes/router_test.py -v"
+testWatch = "set PYTHONPATH=src && ptw --runner \"python -m pytest -q src/tests\""
 
 [tool.ruff]
 line-length = 88
