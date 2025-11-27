@@ -43,4 +43,5 @@ Testes Automatizados
 
 ## Produção
 Rodar em produção
+- `make setup` executa o Makefile.
 - `task prod` executa o script `prod.py` para produção.
