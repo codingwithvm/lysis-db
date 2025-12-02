@@ -1,6 +1,9 @@
 from fastapi import APIRouter
 
+from ....schemas.schemas import OriginDateFilter, YearRangeFilter
 from ....services.processes.service import (
+    get_by_origin_registration_by_year_range,
+    get_by_origin_with_instance_date_filter,
     get_group_stats,
     get_matter_stats,
     get_organization_stats,
@@ -52,3 +55,21 @@ def processes_by_organization():
     Retorna estatísticas dos processos agrupados por organização.
     """
     return get_organization_stats()
+
+@router.post(
+    "/by-origin-with-instance-date-filter", 
+    summary="Processos por periodo"
+)
+def processes_by_origin_with_instance_date_filter(filters: OriginDateFilter):
+    return get_by_origin_with_instance_date_filter(filters)
+
+@router.post(
+    "/by-origin-registration-year-range", 
+    summary="Processos de cadastro por intervalo de anos"
+)
+def processes_by_origin_registration_year_range(filters: YearRangeFilter):
+    """
+    Retorna o total de processos de origem 'Cadastro' agrupados por ano,
+    dentro do intervalo especificado (start_year a end_year).
+    """
+    return get_by_origin_registration_by_year_range(filters)

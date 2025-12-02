@@ -31,3 +31,40 @@ def test_processes_by_group():
 def test_processes_by_organization():
   response = client.get("/api/v1/processes/by-organization")
   assert response.status_code == 200
+
+def test_processes_by_origin_with_instance_date_filter():
+  payload = {
+    "start_date": "1991-01-01",
+    "end_date": "2025-11-28"
+  }
+  response = client.post(
+    "/api/v1/processes/by-origin-with-instance-date-filter",
+    json=payload
+  )
+  
+  assert response.status_code == 200
+
+def test_processes_by_origin_registration_year_range():
+  """
+  Testa o endpoint POST /by-origin-registration-year-range
+  com intervalo de anos 2000-2025
+  """
+  payload = {
+    "start_year": 2000,
+    "end_year": 2025
+  }
+  response = client.post(
+    "/api/v1/processes/by-origin-registration-year-range",
+    json=payload
+  )
+  
+  assert response.status_code == 200
+  data = response.json()
+  
+  assert isinstance(data, list)
+
+  for record in data:
+    assert "Ano" in record
+    assert "TotalCadastro" in record
+    assert isinstance(record["Ano"], int)
+    assert isinstance(record["TotalCadastro"], int)

@@ -3,9 +3,12 @@ from ...repositories.processes.repository import (
     fetch_by_matter,
     fetch_by_organization,
     fetch_by_origin,
+    fetch_by_origin_registration_by_year_range,
+    fetch_by_origin_with_instance_date_filter,
     fetch_by_status,
     fetch_process_count,
 )
+from ...schemas.schemas import OriginDateFilter, YearRangeFilter
 
 
 def get_process_count():
@@ -26,3 +29,9 @@ def get_group_stats():
 
 def get_organization_stats():
     return fetch_by_organization()
+
+def get_by_origin_with_instance_date_filter(filters: OriginDateFilter):
+    return fetch_by_origin_with_instance_date_filter(filters)
+
+def get_by_origin_registration_by_year_range(filters: YearRangeFilter):
+    return fetch_by_origin_registration_by_year_range(filters)

@@ -1,8 +1,8 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .api.v1.processes.router import router as processo_router
 from .api.v1.status.router import router as status_router
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
   title="Lysis DB API",
