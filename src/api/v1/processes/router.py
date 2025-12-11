@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
+from typing import Optional
 
 from ....schemas.schemas import (
     DateRangeFilter,
@@ -33,39 +34,39 @@ def process_count():
     return get_process_count()
 
 @router.get("/by-origin", summary="Processos por origem")
-def processes_by_origin():
-    """
-    Retorna estatísticas dos processos agrupados por origem.
-    """
-    return get_origin_stats()
+def processes_by_origin(
+    start_date: Optional[str] = Query(None, description="Data inicial (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Data final (YYYY-MM-DD)")
+):
+    return get_origin_stats(start_date, end_date)
 
 @router.get("/by-status", summary="Processos por status")
-def processes_by_status():
-    """
-    Retorna estatísticas dos processos agrupados por status.
-    """
-    return get_status_stats()
+def processes_by_status(
+    start_date: Optional[str] = Query(None, description="Data inicial (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Data final (YYYY-MM-DD)")
+):
+    return get_status_stats(start_date, end_date)
 
 @router.get("/by-matter", summary="Processos por assunto")
-def processes_by_matter():
-    """
-    Retorna estatísticas dos processos agrupados por assunto/matéria.
-    """
-    return get_matter_stats()
+def processes_by_matter(
+    start_date: Optional[str] = Query(None, description="Data inicial (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Data final (YYYY-MM-DD)")
+):
+    return get_matter_stats(start_date, end_date)
 
 @router.get("/by-group", summary="Processos por grupo")
-def processes_by_group():
-    """
-    Retorna estatísticas dos processos agrupados por grupo.
-    """
-    return get_group_stats()
+def processes_by_group(
+    start_date: Optional[str] = Query(None, description="Data inicial (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Data final (YYYY-MM-DD)")
+):
+    return get_group_stats(start_date, end_date)
 
 @router.get("/by-organization", summary="Processos por organização")
-def processes_by_organization():
-    """
-    Retorna estatísticas dos processos agrupados por organização.
-    """
-    return get_organization_stats()
+def processes_by_organization(
+    start_date: Optional[str] = Query(None, description="Data inicial (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Data final (YYYY-MM-DD)")
+):
+    return get_organization_stats(start_date, end_date)
 
 @router.post(
     "/by-origin-with-instance-date-filter", 
