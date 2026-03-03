@@ -91,7 +91,7 @@ def fetch_by_origin_with_instance_date_filter(filters: OriginDateFilter):
             ON T01.ISN_PROCESSO = T03.ISN_PROCESSO
         CROSS APPLY (
             SELECT TRY_CONVERT(
-                date, NULLIF(LTRIM(RTRIM(T03.DAT_INSTANCIA)), '')
+                date, NULLIF(LTRIM(RTRIM(T01.DAT_STATUS)), '')
             ) AS DAT_INSTANCIA_DT
         ) AS X
         WHERE X.DAT_INSTANCIA_DT IS NOT NULL
@@ -114,14 +114,14 @@ def fetch_by_origin_registration_by_year_range(filters: YearRangeFilter):
     sql = f"""
         WITH Base AS (
             SELECT 
-                YEAR(TRY_CONVERT(date, T03.DAT_INSTANCIA)) AS Ano
+                YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) AS Ano
             FROM PRO_PROCESSO_VALENCA T01
             INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA T02 
                 ON T01.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
                AND T02.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
             LEFT JOIN INS_INSTANCIA_VALENCA T03 
                 ON T01.ISN_PROCESSO = T03.ISN_PROCESSO
-            WHERE TRY_CONVERT(date, T03.DAT_INSTANCIA) IS NOT NULL
+            WHERE TRY_CONVERT(date, T01.DAT_STATUS) IS NOT NULL
               AND T02.DES_ATRIBUTO = 'Cadastro'
         ),
         Anos AS (
@@ -144,18 +144,18 @@ def fetch_by_origin_registration_last_six_months(filters: YearFilter):
     sql = f"""
         WITH Base AS (
             SELECT 
-                TRY_CONVERT(date, T03.DAT_INSTANCIA) AS DataInstancia,
-                MONTH(TRY_CONVERT(date, T03.DAT_INSTANCIA)) AS Mes,
-                YEAR(TRY_CONVERT(date, T03.DAT_INSTANCIA)) AS Ano
+                TRY_CONVERT(date, T01.DAT_STATUS) AS DataInstancia,
+                MONTH(TRY_CONVERT(date, T01.DAT_STATUS)) AS Mes,
+                YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) AS Ano
             FROM PRO_PROCESSO_VALENCA T01
             INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA T02 
                 ON T01.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
                AND T02.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
             LEFT JOIN INS_INSTANCIA_VALENCA T03 
                 ON T01.ISN_PROCESSO = T03.ISN_PROCESSO
-            WHERE TRY_CONVERT(date, T03.DAT_INSTANCIA) IS NOT NULL
+            WHERE TRY_CONVERT(date, T01.DAT_STATUS) IS NOT NULL
               AND T02.DES_ATRIBUTO = 'Cadastro'
-              AND YEAR(TRY_CONVERT(date, T03.DAT_INSTANCIA)) = {filters.year}
+              AND YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) = {filters.year}
         ),
         Meses AS (
             SELECT 7 AS Mes
@@ -183,18 +183,18 @@ def fetch_by_origin_capture_last_six_months(filters: YearFilter):
     sql = f"""
         WITH Base AS (
             SELECT 
-                TRY_CONVERT(date, T03.DAT_INSTANCIA) AS DataInstancia,
-                MONTH(TRY_CONVERT(date, T03.DAT_INSTANCIA)) AS Mes,
-                YEAR(TRY_CONVERT(date, T03.DAT_INSTANCIA)) AS Ano
+                TRY_CONVERT(date, T01.DAT_STATUS) AS DataInstancia,
+                MONTH(TRY_CONVERT(date, T01.DAT_STATUS)) AS Mes,
+                YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) AS Ano
             FROM PRO_PROCESSO_VALENCA T01
             INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA T02 
                 ON T01.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
                AND T02.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
             LEFT JOIN INS_INSTANCIA_VALENCA T03 
                 ON T01.ISN_PROCESSO = T03.ISN_PROCESSO
-            WHERE TRY_CONVERT(date, T03.DAT_INSTANCIA) IS NOT NULL
+            WHERE TRY_CONVERT(date, T01.DAT_STATUS) IS NOT NULL
               AND T02.DES_ATRIBUTO = 'Captura'
-              AND YEAR(TRY_CONVERT(date, T03.DAT_INSTANCIA)) = {filters.year}
+              AND YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) = {filters.year}
         ),
         Meses AS (
             SELECT 7 AS Mes
@@ -222,18 +222,18 @@ def fetch_by_origin_distribution_last_six_months(filters: YearFilter):
     sql = f"""
         WITH Base AS (
             SELECT 
-                TRY_CONVERT(date, T03.DAT_INSTANCIA) AS DataInstancia,
-                MONTH(TRY_CONVERT(date, T03.DAT_INSTANCIA)) AS Mes,
-                YEAR(TRY_CONVERT(date, T03.DAT_INSTANCIA)) AS Ano
+                TRY_CONVERT(date, T01.DAT_STATUS) AS DataInstancia,
+                MONTH(TRY_CONVERT(date, T01.DAT_STATUS)) AS Mes,
+                YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) AS Ano
             FROM PRO_PROCESSO_VALENCA T01
             INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA T02 
                 ON T01.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
                AND T02.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
             LEFT JOIN INS_INSTANCIA_VALENCA T03 
                 ON T01.ISN_PROCESSO = T03.ISN_PROCESSO
-            WHERE TRY_CONVERT(date, T03.DAT_INSTANCIA) IS NOT NULL
+            WHERE TRY_CONVERT(date, T01.DAT_STATUS) IS NOT NULL
               AND T02.DES_ATRIBUTO = 'Distribuição'
-              AND YEAR(TRY_CONVERT(date, T03.DAT_INSTANCIA)) = {filters.year}
+              AND YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) = {filters.year}
         ),
         Meses AS (
             SELECT 7 AS Mes
@@ -261,18 +261,18 @@ def fetch_by_origin_import_last_six_months(filters: YearFilter):
     sql = f"""
         WITH Base AS (
             SELECT 
-                TRY_CONVERT(date, T03.DAT_INSTANCIA) AS DataInstancia,
-                MONTH(TRY_CONVERT(date, T03.DAT_INSTANCIA)) AS Mes,
-                YEAR(TRY_CONVERT(date, T03.DAT_INSTANCIA)) AS Ano
+                TRY_CONVERT(date, T01.DAT_STATUS) AS DataInstancia,
+                MONTH(TRY_CONVERT(date, T01.DAT_STATUS)) AS Mes,
+                YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) AS Ano
             FROM PRO_PROCESSO_VALENCA T01
             INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA T02 
                 ON T01.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
                AND T02.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
             LEFT JOIN INS_INSTANCIA_VALENCA T03 
                 ON T01.ISN_PROCESSO = T03.ISN_PROCESSO
-            WHERE TRY_CONVERT(date, T03.DAT_INSTANCIA) IS NOT NULL
+            WHERE TRY_CONVERT(date, T01.DAT_STATUS) IS NOT NULL
               AND T02.DES_ATRIBUTO = 'Importação'
-              AND YEAR(TRY_CONVERT(date, T03.DAT_INSTANCIA)) = {filters.year}
+              AND YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) = {filters.year}
         ),
         Meses AS (
             SELECT 7 AS Mes
@@ -309,7 +309,7 @@ def fetch_by_origin_with_date_range(filters: DateRangeFilter):
             ON T01.ISN_PROCESSO = T03.ISN_PROCESSO
         CROSS APPLY (
             SELECT TRY_CONVERT(
-                date, NULLIF(LTRIM(RTRIM(T03.DAT_INSTANCIA)), '')
+                date, NULLIF(LTRIM(RTRIM(T01.DAT_STATUS)), '')
             ) 
             AS DAT_INSTANCIA_DT
         ) AS X
@@ -336,7 +336,7 @@ def fetch_by_origin_with_date_range_detailed(filters: DateRangeFilter):
             ON T01.ISN_PROCESSO = T03.ISN_PROCESSO
         CROSS APPLY (
             SELECT TRY_CONVERT(
-                date, NULLIF(LTRIM(RTRIM(T03.DAT_INSTANCIA)), '')
+                date, NULLIF(LTRIM(RTRIM(T01.DAT_STATUS)), '')
             ) AS DAT_INSTANCIA_DT
         ) AS X
         WHERE X.DAT_INSTANCIA_DT IS NOT NULL
