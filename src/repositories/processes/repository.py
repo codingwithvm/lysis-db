@@ -121,7 +121,7 @@ def fetch_by_origin_registration_by_year_range(filters: YearRangeFilter):
     sql = f"""
         SELECT 
             YEAR(p.DAT_CADASTRO) AS Ano, 
-            COUNT(DISTINCT i.NUM_PROCESSO) AS TotalCadastro,
+            COUNT(DISTINCT i.NUM_PROCESSO) AS TotalCadastro
         FROM PRO_PROCESSO_VALENCA p
         INNER JOIN ADA_ANDAMENTO_VALENCA aav
             ON aav.ISN_PROCESSO = p.ISN_PROCESSO
