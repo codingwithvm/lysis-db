@@ -118,37 +118,25 @@ def fetch_by_origin_with_instance_date_filter(filters: OriginDateFilter):
     return run_query(sql)
 
 def fetch_by_origin_registration_by_year_range(filters: YearRangeFilter):
-    years_union = " UNION ALL ".join(
-        [f"SELECT {year} AS Ano" for year in range(
-            filters.start_year, filters.end_year + 1
-        )])
-    
     sql = f"""
-        WITH Base AS (
-            SELECT 
-                YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) AS Ano
-            FROM PRO_PROCESSO_VALENCA T01
-            INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA T02 
-                ON T01.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
-               AND T02.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
-            LEFT JOIN INS_INSTANCIA_VALENCA T03 
-                ON T01.ISN_PROCESSO = T03.ISN_PROCESSO
-            WHERE TRY_CONVERT(date, T01.DAT_STATUS) IS NOT NULL
-              AND T02.DES_ATRIBUTO = 'Cadastro'
-        ),
-        Anos AS (
-            {years_union}
-        )
         SELECT 
-            A.Ano,
-            ISNULL(B.Total, 0) AS TotalCadastro
-        FROM Anos A
-        LEFT JOIN (
-            SELECT Ano, COUNT(*) AS Total
-            FROM Base
-            GROUP BY Ano
-        ) B ON A.Ano = B.Ano
-        ORDER BY A.Ano
+            YEAR(p.DAT_CADASTRO) AS Ano, 
+            COUNT(DISTINCT i.NUM_PROCESSO) AS TotalCadastro,
+        FROM PRO_PROCESSO_VALENCA p
+        INNER JOIN ADA_ANDAMENTO_VALENCA aav
+            ON aav.ISN_PROCESSO = p.ISN_PROCESSO
+        LEFT JOIN INS_INSTANCIA_VALENCA i
+            ON i.ISN_PROCESSO = p.ISN_PROCESSO
+        LEFT JOIN GPP_GRUPO_PROCESSO_VALENCA gpp
+            ON p.ISN_GRUPO_PROCESSO = gpp.ISN_GRUPO_PROCESSO
+        INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA T02
+            ON p.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
+           AND T02.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
+        WHERE p.DAT_CADASTRO >= '{filters.start_year}-01-01'
+          AND p.DAT_CADASTRO < '{filters.end_year}-01-01'
+          AND i.NUM_PROCESSO IS NOT NULL
+          GROUP BY YEAR(p.DAT_CADASTRO)
+ORDER BY Ano;
     """
     return run_query(sql)
 
