@@ -140,6 +140,60 @@ ORDER BY Ano
     """
     return run_query(sql)
 
+def fetch_process_registration_details_by_year_range(filters: YearRangeFilter):
+    """
+    Retorna o total de cadastros por ano com detalhamento por:
+    origem, status, matéria, equipe e órgão.
+
+    Observação de manutenção:
+    - O período segue o padrão [start_year, end_year), ou seja:
+      inclui start_year e exclui end_year.
+    """
+    sql = f"""
+        -- Bloco principal: consolidação anual de cadastros com dimensões de detalhamento
+        SELECT 
+            YEAR(p.DAT_CADASTRO) AS Ano, 
+            COUNT(DISTINCT iiv.NUM_PROCESSO) AS TotalCadastro,
+            ddav.DES_ATRIBUTO AS OrigemProcesso,
+            ddav02.DES_ATRIBUTO AS StatusProcesso,
+            COALESCE(mmv.NOM_MATERIA, 'NÃ£o informado') AS materia,
+            COALESCE(ggpv.DSC_GRUPO_PROCESSO, 'NÃ£o informado') AS equipe,
+            COALESCE(oov.DSC_ORGAO, 'NÃ£o informado') AS orgao
+        FROM PRO_PROCESSO_VALENCA p
+        INNER JOIN ADA_ANDAMENTO_VALENCA aav
+            ON aav.ISN_PROCESSO = p.ISN_PROCESSO
+        LEFT JOIN INS_INSTANCIA_VALENCA iiv
+            ON iiv.ISN_PROCESSO = p.ISN_PROCESSO
+        LEFT JOIN GPP_GRUPO_PROCESSO_VALENCA gpp
+            ON p.ISN_GRUPO_PROCESSO = gpp.ISN_GRUPO_PROCESSO
+        INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA ddav
+            ON p.TIP_ORIGEM_PROCESSO = ddav.VAL_ATRIBUTO
+           AND ddav.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
+        INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA ddav02
+            ON p.STA_PROCESSO = ddav02.VAL_ATRIBUTO
+           AND ddav02.NOM_ATRIBUTO = 'STA_PROCESSO'
+        LEFT JOIN MAT_MATERIA_VALENCA mmv
+            ON p.ISN_MATERIA = mmv.ISN_MATERIA
+        LEFT JOIN GPP_GRUPO_PROCESSO_VALENCA ggpv
+            ON p.ISN_GRUPO_PROCESSO = ggpv.ISN_GRUPO_PROCESSO
+        LEFT JOIN ORG_ORGAO_VALENCA oov
+            ON iiv.ISN_ORGAO = oov.ISN_ORGAO
+        -- Filtro de período: inclui start_year e exclui end_year
+        WHERE p.DAT_CADASTRO >= '{filters.start_year}-01-01'
+          AND p.DAT_CADASTRO < '{filters.end_year}-01-01'
+          AND iiv.NUM_PROCESSO IS NOT NULL
+          -- AND aav.TIP_ORIGEM = 3
+        GROUP BY 
+            YEAR(p.DAT_CADASTRO),
+            ddav.DES_ATRIBUTO,
+            ddav02.DES_ATRIBUTO,
+            mmv.NOM_MATERIA,
+            ggpv.DSC_GRUPO_PROCESSO,
+            oov.DSC_ORGAO
+        ORDER BY Ano
+    """
+    return run_query(sql)
+
 def fetch_by_origin_registration_last_six_months(filters: YearFilter):
     sql = f"""
         WITH Base AS (
@@ -448,7 +502,6 @@ def fetch_publication_by_matter_last_six_months(filters: YearFilter):
         ORDER BY M.Mes
     """
     return run_query(sql)
-
 
 def fetch_publication_by_matter_last_month(filters: YearFilter):
     """
