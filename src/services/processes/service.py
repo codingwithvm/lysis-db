@@ -10,6 +10,7 @@ from ...repositories.processes.repository import (
     fetch_by_origin_distribution_last_six_months,
     fetch_by_origin_import_last_six_months,
     fetch_by_origin_registration_by_year_range,
+    fetch_process_registration_details_by_year_range,
     fetch_by_origin_registration_last_six_months,
     fetch_by_origin_with_date_range,
     fetch_by_origin_with_date_range_detailed,
@@ -121,6 +122,9 @@ def get_by_origin_with_instance_date_filter(filters: OriginDateFilter):
 
 def get_by_origin_registration_by_year_range(filters: YearRangeFilter):
     return fetch_by_origin_registration_by_year_range(filters)
+
+def get_process_registration_details_by_year_range(filters: YearRangeFilter):
+    return fetch_process_registration_details_by_year_range(filters)
 
 def get_by_origin_registration_last_six_months(filters: YearFilter):
     return fetch_by_origin_registration_last_six_months(filters)

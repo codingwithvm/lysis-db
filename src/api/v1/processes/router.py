@@ -12,6 +12,7 @@ from ....services.processes.service import (
     get_by_origin_distribution_last_six_months,
     get_by_origin_import_last_six_months,
     get_by_origin_registration_by_year_range,
+    get_process_registration_details_by_year_range,
     get_by_origin_registration_last_six_months,
     get_by_origin_with_date_range,
     get_by_origin_with_date_range_detailed,
@@ -89,6 +90,17 @@ def processes_by_origin_registration_year_range(filters: YearRangeFilter):
     dentro do intervalo especificado (start_year a end_year).
     """
     return get_by_origin_registration_by_year_range(filters)
+
+@router.post(
+    "/by-origin-registration-year-range-detailed",
+    summary="Processos de cadastro detalhados por intervalo de anos"
+)
+def processes_by_origin_registration_year_range_detailed(filters: YearRangeFilter):
+    """
+    Retorna os processos de cadastro por ano com detalhamento de:
+    origem, status, matéria, equipe e órgão, no intervalo informado.
+    """
+    return get_process_registration_details_by_year_range(filters)
 
 @router.post(
     "/by-origin-registration-last-six-months",
