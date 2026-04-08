@@ -17,26 +17,6 @@ client = TestClient(app)
     [
         ("/api/v1/processes/count", "get_process_count", {"total": 10}),
         (
-            "/api/v1/processes/by-status",
-            "get_status_stats",
-            [{"status": "Ativo", "total": 3}],
-        ),
-        (
-            "/api/v1/processes/by-matter",
-            "get_matter_stats",
-            [{"subject": "Cível", "total": 2}],
-        ),
-        (
-            "/api/v1/processes/by-group",
-            "get_group_stats",
-            [{"process_group": "Equipe A", "total": 4}],
-        ),
-        (
-            "/api/v1/processes/by-organization",
-            "get_organization_stats",
-            [{"agency": "Órgão X", "total": 1}],
-        ),
-        (
             "/api/v1/processes/publications/by-matter-total",
             "get_publication_by_matter_total",
             [{"subject": "Fiscal", "total": 6}],
@@ -52,42 +32,39 @@ def test_get_endpoints(monkeypatch, path, target, payload):
     assert response.json() == payload
 
 
-def test_processes_by_origin_parses_query_dates(monkeypatch):
-    captured = {}
-
-    def fake_handler(start_date, end_date):
-        captured["start_date"] = start_date
-        captured["end_date"] = end_date
-        return [{"origin": "Cadastro", "total": 5}]
-
-    monkeypatch.setattr(
-        processes_router_module,
-        "get_origin_stats",
-        fake_handler,
-    )
-
-    response = client.get(
-        "/api/v1/processes/by-origin",
-        params={"start_date": "2025-01-10", "end_date": "2025-01-31"},
-    )
-
-    assert response.status_code == 200
-    assert captured["start_date"] == date(2025, 1, 10)
-    assert captured["end_date"] == date(2025, 1, 31)
-
-
-def test_processes_by_origin_rejects_invalid_query_dates():
-    response = client.get(
-        "/api/v1/processes/by-origin",
-        params={"start_date": "data-invalida"},
-    )
-
-    assert response.status_code == 422
-
-
 @pytest.mark.parametrize(
     ("path", "target", "body", "payload"),
     [
+        (
+            "/api/v1/processes/by-origin",
+            "get_origin_stats",
+            {"start_date": "2025-01-10", "end_date": "2025-01-31"},
+            [{"origin": "Cadastro", "total": 5}],
+        ),
+        (
+            "/api/v1/processes/by-status",
+            "get_status_stats",
+            {"start_date": "2025-01-10", "end_date": "2025-01-31"},
+            [{"status": "Ativo", "total": 3}],
+        ),
+        (
+            "/api/v1/processes/by-matter",
+            "get_matter_stats",
+            {"start_date": "2025-01-10", "end_date": "2025-01-31"},
+            [{"subject": "Civel", "total": 2}],
+        ),
+        (
+            "/api/v1/processes/by-group",
+            "get_group_stats",
+            {"start_date": "2025-01-10", "end_date": "2025-01-31"},
+            [{"process_group": "Equipe A", "total": 4}],
+        ),
+        (
+            "/api/v1/processes/by-organization",
+            "get_organization_stats",
+            {"start_date": "2025-01-10", "end_date": "2025-01-31"},
+            [{"agency": "Orgao X", "total": 1}],
+        ),
         (
             "/api/v1/processes/by-origin-with-instance-date-filter",
             "get_by_origin_with_instance_date_filter",
@@ -97,31 +74,31 @@ def test_processes_by_origin_rejects_invalid_query_dates():
         (
             "/api/v1/processes/by-origin-registration-year-range",
             "get_by_origin_registration_by_year_range",
-            {"start_year": 2020, "end_year": 2025},
+            {"start_date": "2020-01-01", "end_date": "2024-12-31"},
             [{"Ano": 2024, "TotalCadastro": 12}],
         ),
         (
             "/api/v1/processes/by-origin-registration-year-range-detailed",
             "get_process_registration_details_by_year_range",
-            {"start_year": 2020, "end_year": 2025},
+            {"start_date": "2020-01-01", "end_date": "2024-12-31"},
             [{"Ano": 2024, "TotalCadastro": 12, "OrigemProcesso": "Cadastro"}],
         ),
         (
             "/api/v1/processes/by-origin-registration-last-six-months",
             "get_by_origin_registration_last_six_months",
-            {"year": 2025},
+            {"start_date": "2025-07-01", "end_date": "2025-12-31"},
             [{"Mes": 7, "NomeMes": "July", "TotalCadastro": 1}],
         ),
         (
             "/api/v1/processes/by-origin-capture-last-six-months",
             "get_by_origin_capture_last_six_months",
-            {"year": 2025},
+            {"start_date": "2025-07-01", "end_date": "2025-12-31"},
             [{"Mes": 7, "NomeMes": "July", "TotalCaptura": 1}],
         ),
         (
             "/api/v1/processes/by-origin-distribution-last-six-months",
             "get_by_origin_distribution_last_six_months",
-            {"year": 2025},
+            {"start_date": "2025-07-01", "end_date": "2025-12-31"},
             [{"Mes": 7, "NomeMes": "July", "TotalDistribuicao": 1}],
         ),
         (
@@ -182,6 +159,29 @@ def test_post_endpoints(monkeypatch, path, target, body, payload):
     assert response.json() == payload
 
 
+def test_processes_by_origin_parses_date_range_payload(monkeypatch):
+    captured = {}
+
+    def fake_handler(filters):
+        captured["filters"] = filters
+        return [{"origin": "Cadastro", "total": 5}]
+
+    monkeypatch.setattr(
+        processes_router_module,
+        "get_origin_stats",
+        fake_handler,
+    )
+
+    response = client.post(
+        "/api/v1/processes/by-origin",
+        json={"start_date": "2025-01-10", "end_date": "2025-01-31"},
+    )
+
+    assert response.status_code == 200
+    assert captured["filters"].start_date == date(2025, 1, 10)
+    assert captured["filters"].end_date == date(2025, 1, 31)
+
+
 def test_process_inclusion_report_parses_pagination_query_params(monkeypatch):
     captured = {}
 
@@ -227,17 +227,17 @@ def test_process_inclusion_report_rejects_invalid_pagination():
 
 def test_date_range_payload_is_validated():
     response = client.post(
-        "/api/v1/processes/by-origin-with-date-range",
+        "/api/v1/processes/by-origin",
         json={"start_date": "2025-12-31", "end_date": "2025-01-01"},
     )
 
     assert response.status_code == 422
 
 
-def test_year_range_payload_is_validated():
+def test_registration_year_range_date_payload_is_validated():
     response = client.post(
         "/api/v1/processes/by-origin-registration-year-range",
-        json={"start_year": 2025, "end_year": 2025},
+        json={"start_date": "2025-12-31", "end_date": "2025-01-01"},
     )
 
     assert response.status_code == 422
