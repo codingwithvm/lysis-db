@@ -1,6 +1,3 @@
-from datetime import date
-from typing import Optional
-
 from ...repositories.processes.repository import (
     fetch_by_group,
     fetch_by_matter,
@@ -27,7 +24,6 @@ from ...schemas.schemas import (
     DateRangeFilter,
     OriginDateFilter,
     YearFilter,
-    YearRangeFilter,
 )
 
 
@@ -37,62 +33,47 @@ def get_process_count():
     return {"total": total}
 
 
-def get_origin_stats(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
-    return fetch_by_origin(start_date, end_date)
+def get_origin_stats(filters: DateRangeFilter):
+    return fetch_by_origin(filters)
 
 
-def get_status_stats(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
-    return fetch_by_status(start_date, end_date)
+def get_status_stats(filters: DateRangeFilter):
+    return fetch_by_status(filters)
 
 
-def get_matter_stats(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
-    return fetch_by_matter(start_date, end_date)
+def get_matter_stats(filters: DateRangeFilter):
+    return fetch_by_matter(filters)
 
 
-def get_group_stats(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
-    return fetch_by_group(start_date, end_date)
+def get_group_stats(filters: DateRangeFilter):
+    return fetch_by_group(filters)
 
 
-def get_organization_stats(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
-    return fetch_by_organization(start_date, end_date)
+def get_organization_stats(filters: DateRangeFilter):
+    return fetch_by_organization(filters)
 
 
 def get_by_origin_with_instance_date_filter(filters: OriginDateFilter):
     return fetch_by_origin_with_instance_date_filter(filters)
 
 
-def get_by_origin_registration_by_year_range(filters: YearRangeFilter):
+def get_by_origin_registration_by_year_range(filters: DateRangeFilter):
     return fetch_by_origin_registration_by_year_range(filters)
 
 
-def get_process_registration_details_by_year_range(filters: YearRangeFilter):
+def get_process_registration_details_by_year_range(filters: DateRangeFilter):
     return fetch_process_registration_details_by_year_range(filters)
 
 
-def get_by_origin_registration_last_six_months(filters: YearFilter):
+def get_by_origin_registration_last_six_months(filters: DateRangeFilter):
     return fetch_by_origin_registration_last_six_months(filters)
 
 
-def get_by_origin_capture_last_six_months(filters: YearFilter):
+def get_by_origin_capture_last_six_months(filters: DateRangeFilter):
     return fetch_by_origin_capture_last_six_months(filters)
 
 
-def get_by_origin_distribution_last_six_months(filters: YearFilter):
+def get_by_origin_distribution_last_six_months(filters: DateRangeFilter):
     return fetch_by_origin_distribution_last_six_months(filters)
 
 

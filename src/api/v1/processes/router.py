@@ -1,6 +1,3 @@
-from datetime import date
-from typing import Optional
-
 from fastapi import APIRouter, Query
 
 from ....schemas.schemas import (
@@ -8,7 +5,6 @@ from ....schemas.schemas import (
     OriginDateFilter,
     PaginatedProcessInclusionReport,
     YearFilter,
-    YearRangeFilter,
 )
 from ....services.processes.service import (
     get_by_origin_capture_last_six_months,
@@ -41,79 +37,34 @@ def process_count():
     return get_process_count()
 
 
-@router.get("/by-origin", summary="Processos por origem")
-def processes_by_origin(
-    start_date: Optional[date] = Query(
-        None,
-        description="Data inicial no formato YYYY-MM-DD",
-    ),
-    end_date: Optional[date] = Query(
-        None,
-        description="Data final no formato YYYY-MM-DD",
-    ),
-):
-    return get_origin_stats(start_date, end_date)
+@router.post("/by-origin", summary="Processos por origem")
+def processes_by_origin(filters: DateRangeFilter):
+    return get_origin_stats(filters)
 
 
-@router.get("/by-status", summary="Processos por status")
-def processes_by_status(
-    start_date: Optional[date] = Query(
-        None,
-        description="Data inicial no formato YYYY-MM-DD",
-    ),
-    end_date: Optional[date] = Query(
-        None,
-        description="Data final no formato YYYY-MM-DD",
-    ),
-):
-    return get_status_stats(start_date, end_date)
+@router.post("/by-status", summary="Processos por status")
+def processes_by_status(filters: DateRangeFilter):
+    return get_status_stats(filters)
 
 
-@router.get("/by-matter", summary="Processos por assunto")
-def processes_by_matter(
-    start_date: Optional[date] = Query(
-        None,
-        description="Data inicial no formato YYYY-MM-DD",
-    ),
-    end_date: Optional[date] = Query(
-        None,
-        description="Data final no formato YYYY-MM-DD",
-    ),
-):
-    return get_matter_stats(start_date, end_date)
+@router.post("/by-matter", summary="Processos por assunto")
+def processes_by_matter(filters: DateRangeFilter):
+    return get_matter_stats(filters)
 
 
-@router.get("/by-group", summary="Processos por grupo")
-def processes_by_group(
-    start_date: Optional[date] = Query(
-        None,
-        description="Data inicial no formato YYYY-MM-DD",
-    ),
-    end_date: Optional[date] = Query(
-        None,
-        description="Data final no formato YYYY-MM-DD",
-    ),
-):
-    return get_group_stats(start_date, end_date)
+@router.post("/by-group", summary="Processos por grupo")
+def processes_by_group(filters: DateRangeFilter):
+    return get_group_stats(filters)
 
 
-@router.get("/by-organization", summary="Processos por organização")
-def processes_by_organization(
-    start_date: Optional[date] = Query(
-        None,
-        description="Data inicial no formato YYYY-MM-DD",
-    ),
-    end_date: Optional[date] = Query(
-        None,
-        description="Data final no formato YYYY-MM-DD",
-    ),
-):
-    return get_organization_stats(start_date, end_date)
+@router.post("/by-organization", summary="Processos por organizacao")
+def processes_by_organization(filters: DateRangeFilter):
+    return get_organization_stats(filters)
 
 
 @router.post(
     "/by-origin-with-instance-date-filter",
-    summary="Processos por data de instância",
+    summary="Processos por data de instancia",
 )
 def processes_by_origin_with_instance_date_filter(filters: OriginDateFilter):
     return get_by_origin_with_instance_date_filter(filters)
@@ -121,51 +72,47 @@ def processes_by_origin_with_instance_date_filter(filters: OriginDateFilter):
 
 @router.post(
     "/by-origin-registration-year-range",
-    summary="Processos de cadastro por intervalo de anos",
+    summary="Processos de cadastro por intervalo de datas",
 )
-def processes_by_origin_registration_year_range(filters: YearRangeFilter):
-    """
-    Retorna processos de origem Cadastro no intervalo semiaberto
-    [start_year, end_year).
-    """
+def processes_by_origin_registration_year_range(filters: DateRangeFilter):
     return get_by_origin_registration_by_year_range(filters)
 
 
 @router.post(
     "/by-origin-registration-year-range-detailed",
-    summary="Processos de cadastro detalhados por intervalo de anos",
+    summary="Processos de cadastro detalhados por intervalo de datas",
 )
-def processes_by_origin_registration_year_range_detailed(filters: YearRangeFilter):
+def processes_by_origin_registration_year_range_detailed(filters: DateRangeFilter):
     return get_process_registration_details_by_year_range(filters)
 
 
 @router.post(
     "/by-origin-registration-last-six-months",
-    summary="Processos de cadastro dos últimos 6 meses do ano",
+    summary="Processos de cadastro por mes no intervalo informado",
 )
-def processes_by_origin_registration_last_six_months(filters: YearFilter):
+def processes_by_origin_registration_last_six_months(filters: DateRangeFilter):
     return get_by_origin_registration_last_six_months(filters)
 
 
 @router.post(
     "/by-origin-capture-last-six-months",
-    summary="Processos de captura dos últimos 6 meses do ano",
+    summary="Processos de captura por mes no intervalo informado",
 )
-def processes_by_origin_capture_last_six_months(filters: YearFilter):
+def processes_by_origin_capture_last_six_months(filters: DateRangeFilter):
     return get_by_origin_capture_last_six_months(filters)
 
 
 @router.post(
     "/by-origin-distribution-last-six-months",
-    summary="Processos de distribuição dos últimos 6 meses do ano",
+    summary="Processos de distribuicao por mes no intervalo informado",
 )
-def processes_by_origin_distribution_last_six_months(filters: YearFilter):
+def processes_by_origin_distribution_last_six_months(filters: DateRangeFilter):
     return get_by_origin_distribution_last_six_months(filters)
 
 
 @router.post(
     "/by-origin-import-last-six-months",
-    summary="Processos de importação dos últimos 6 meses do ano",
+    summary="Processos de importacao dos ultimos 6 meses do ano",
 )
 def processes_by_origin_import_last_six_months(filters: YearFilter):
     return get_by_origin_import_last_six_months(filters)
@@ -181,7 +128,7 @@ def processes_by_origin_with_date_range(filters: DateRangeFilter):
 
 @router.post(
     "/by-origin-with-date-range-detailed",
-    summary="Processos por origem e mês dentro de intervalo de datas",
+    summary="Processos por origem e mes dentro de intervalo de datas",
 )
 def processes_by_origin_with_date_range_detailed(filters: DateRangeFilter):
     return get_by_origin_with_date_range_detailed(filters)
@@ -211,7 +158,7 @@ def process_inclusion_period_report(
 
 @router.post(
     "/publications/by-matter-year",
-    summary="Publicações por matéria em um ano específico",
+    summary="Publicacoes por materia em um ano especifico",
 )
 def publications_by_matter_year(filters: YearFilter):
     return get_publication_by_matter_year(filters)
@@ -219,7 +166,7 @@ def publications_by_matter_year(filters: YearFilter):
 
 @router.get(
     "/publications/by-matter-total",
-    summary="Total geral de publicações por matéria",
+    summary="Total geral de publicacoes por materia",
 )
 def publications_by_matter_total():
     return get_publication_by_matter_total()
@@ -227,7 +174,7 @@ def publications_by_matter_total():
 
 @router.post(
     "/publications/by-matter-last-six-months",
-    summary="Publicações por mês nos últimos 6 meses do ano",
+    summary="Publicacoes por mes nos ultimos 6 meses do ano",
 )
 def publications_by_matter_last_six_months(filters: YearFilter):
     return get_publication_by_matter_last_six_months(filters)
@@ -235,7 +182,7 @@ def publications_by_matter_last_six_months(filters: YearFilter):
 
 @router.post(
     "/publications/by-matter-last-month",
-    summary="Publicações por matéria no último mês com dados",
+    summary="Publicacoes por materia no ultimo mes com dados",
 )
 def publications_by_matter_last_month(filters: YearFilter):
     return get_publication_by_matter_last_month(filters)

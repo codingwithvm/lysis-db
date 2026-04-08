@@ -6,7 +6,6 @@ from src.schemas.schemas import (
     DateRangeFilter,
     OriginDateFilter,
     YearFilter,
-    YearRangeFilter,
 )
 
 
@@ -14,10 +13,7 @@ def _serialize_date(value: Optional[date]) -> Optional[str]:
     return value.isoformat() if value else None
 
 
-def _date_filter_params(
-    start_date: Optional[date],
-    end_date: Optional[date],
-) -> Tuple[
+def _date_filter_params(filters: DateRangeFilter) -> Tuple[
     Optional[str],
     Optional[str],
     Optional[str],
@@ -25,8 +21,8 @@ def _date_filter_params(
     Optional[str],
     Optional[str],
 ]:
-    start = _serialize_date(start_date)
-    end = _serialize_date(end_date)
+    start = _serialize_date(filters.start_date)
+    end = _serialize_date(filters.end_date)
     return (start, end, start, start, end, end)
 
 
@@ -50,40 +46,49 @@ def _date_filter_clause(date_expr: str) -> str:
 def _fetch_origin_last_six_months(
     origin_name: str,
     total_alias: str,
-    year: int,
+    filters: DateRangeFilter,
 ):
+    start = _serialize_date(filters.start_date)
+    end = _serialize_date(filters.end_date)
+    start_month = filters.start_date.replace(day=1).isoformat()
+    end_month = filters.end_date.replace(day=1).isoformat()
     sql = f"""
         WITH Base AS (
-            SELECT MONTH(TRY_CONVERT(date, T01.DAT_STATUS)) AS Mes
+            SELECT DATEFROMPARTS(
+                       YEAR(TRY_CONVERT(date, T01.DAT_STATUS)),
+                       MONTH(TRY_CONVERT(date, T01.DAT_STATUS)),
+                       1
+                   ) AS MesRef
             FROM PRO_PROCESSO_VALENCA T01
             INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA T02
                 ON T01.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
                AND T02.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
             WHERE TRY_CONVERT(date, T01.DAT_STATUS) IS NOT NULL
               AND T02.DES_ATRIBUTO = %s
-              AND YEAR(TRY_CONVERT(date, T01.DAT_STATUS)) = %s
+              AND TRY_CONVERT(date, T01.DAT_STATUS) >= %s
+              AND TRY_CONVERT(date, T01.DAT_STATUS) < DATEADD(day, 1, %s)
         ),
         Meses AS (
-            SELECT 7 AS Mes
-            UNION ALL SELECT 8
-            UNION ALL SELECT 9
-            UNION ALL SELECT 10
-            UNION ALL SELECT 11
-            UNION ALL SELECT 12
+            SELECT TRY_CONVERT(date, %s) AS MesRef
+            UNION ALL
+            SELECT DATEADD(month, 1, MesRef)
+            FROM Meses
+            WHERE DATEADD(month, 1, MesRef) <= TRY_CONVERT(date, %s)
         )
         SELECT
-            M.Mes,
-            DATENAME(MONTH, DATEFROMPARTS(%s, M.Mes, 1)) AS NomeMes,
+            MONTH(M.MesRef) AS Mes,
+            DATENAME(MONTH, M.MesRef) AS NomeMes,
             ISNULL(C.Total, 0) AS {total_alias}
         FROM Meses M
         LEFT JOIN (
-            SELECT Mes, COUNT(*) AS Total
+            SELECT MesRef, COUNT(*) AS Total
             FROM Base
-            GROUP BY Mes
-        ) C ON M.Mes = C.Mes
-        ORDER BY M.Mes
+            GROUP BY MesRef
+        ) C ON M.MesRef = C.MesRef
+        ORDER BY M.MesRef
+        OPTION (MAXRECURSION 1000)
     """
-    return run_query(sql, (origin_name, year, year))
+    return run_query(sql, (origin_name, start, end, start_month, end_month))
 
 
 def fetch_process_count():
@@ -94,10 +99,7 @@ def fetch_process_count():
     return run_query(sql)
 
 
-def fetch_by_origin(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
+def fetch_by_origin(filters: DateRangeFilter):
     instance_date = _instance_date_expr("T03")
     sql = f"""
         SELECT COUNT(*) AS total,
@@ -112,13 +114,10 @@ def fetch_by_origin(
         GROUP BY T02.DES_ATRIBUTO
         ORDER BY total DESC
     """
-    return run_query(sql, _date_filter_params(start_date, end_date))
+    return run_query(sql, _date_filter_params(filters))
 
 
-def fetch_by_status(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
+def fetch_by_status(filters: DateRangeFilter):
     instance_date = _instance_date_expr("T03")
     sql = f"""
         SELECT COUNT(*) AS total,
@@ -133,13 +132,10 @@ def fetch_by_status(
         GROUP BY T02.DES_ATRIBUTO
         ORDER BY T02.DES_ATRIBUTO
     """
-    return run_query(sql, _date_filter_params(start_date, end_date))
+    return run_query(sql, _date_filter_params(filters))
 
 
-def fetch_by_matter(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
+def fetch_by_matter(filters: DateRangeFilter):
     instance_date = _instance_date_expr("T03")
     sql = f"""
         SELECT COUNT(*) AS total,
@@ -153,13 +149,10 @@ def fetch_by_matter(
         GROUP BY COALESCE(T02.NOM_MATERIA, 'Não informado')
         ORDER BY subject
     """
-    return run_query(sql, _date_filter_params(start_date, end_date))
+    return run_query(sql, _date_filter_params(filters))
 
 
-def fetch_by_group(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
+def fetch_by_group(filters: DateRangeFilter):
     instance_date = _instance_date_expr("T03")
     sql = f"""
         SELECT COUNT(*) AS total,
@@ -173,13 +166,10 @@ def fetch_by_group(
         GROUP BY COALESCE(T02.DSC_GRUPO_PROCESSO, 'Não informado')
         ORDER BY process_group
     """
-    return run_query(sql, _date_filter_params(start_date, end_date))
+    return run_query(sql, _date_filter_params(filters))
 
 
-def fetch_by_organization(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-):
+def fetch_by_organization(filters: DateRangeFilter):
     instance_date = _instance_date_expr("T02")
     sql = f"""
         SELECT COUNT(*) AS total,
@@ -193,7 +183,7 @@ def fetch_by_organization(
         GROUP BY COALESCE(T03.DSC_ORGAO, 'Não informado')
         ORDER BY agency
     """
-    return run_query(sql, _date_filter_params(start_date, end_date))
+    return run_query(sql, _date_filter_params(filters))
 
 
 def fetch_by_origin_with_instance_date_filter(filters: OriginDateFilter):
@@ -220,7 +210,7 @@ def fetch_by_origin_with_instance_date_filter(filters: OriginDateFilter):
     return run_query(sql, params)
 
 
-def fetch_by_origin_registration_by_year_range(filters: YearRangeFilter):
+def fetch_by_origin_registration_by_year_range(filters: DateRangeFilter):
     sql = """
         SELECT YEAR(p.DAT_CADASTRO) AS Ano,
                COUNT(DISTINCT i.NUM_PROCESSO) AS TotalCadastro
@@ -228,23 +218,23 @@ def fetch_by_origin_registration_by_year_range(filters: YearRangeFilter):
         LEFT JOIN INS_INSTANCIA_VALENCA i
             ON i.ISN_PROCESSO = p.ISN_PROCESSO
         INNER JOIN DAR_DOMINIO_ATRIBUTO_VALENCA T02
-            ON p.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
+           ON p.TIP_ORIGEM_PROCESSO = T02.VAL_ATRIBUTO
            AND T02.NOM_ATRIBUTO = 'TIP_ORIGEM_PROCESSO'
         WHERE p.DAT_CADASTRO >= %s
-          AND p.DAT_CADASTRO < %s
+          AND p.DAT_CADASTRO < DATEADD(day, 1, %s)
           AND i.NUM_PROCESSO IS NOT NULL
           AND T02.DES_ATRIBUTO = 'Cadastro'
         GROUP BY YEAR(p.DAT_CADASTRO)
         ORDER BY Ano
     """
     params = (
-        f"{filters.start_year}-01-01",
-        f"{filters.end_year}-01-01",
+        _serialize_date(filters.start_date),
+        _serialize_date(filters.end_date),
     )
     return run_query(sql, params)
 
 
-def fetch_process_registration_details_by_year_range(filters: YearRangeFilter):
+def fetch_process_registration_details_by_year_range(filters: DateRangeFilter):
     sql = """
         SELECT YEAR(p.DAT_CADASTRO) AS Ano,
                COUNT(DISTINCT iiv.NUM_PROCESSO) AS TotalCadastro,
@@ -269,7 +259,7 @@ def fetch_process_registration_details_by_year_range(filters: YearRangeFilter):
         LEFT JOIN ORG_ORGAO_VALENCA oov
             ON iiv.ISN_ORGAO = oov.ISN_ORGAO
         WHERE p.DAT_CADASTRO >= %s
-          AND p.DAT_CADASTRO < %s
+          AND p.DAT_CADASTRO < DATEADD(day, 1, %s)
           AND iiv.NUM_PROCESSO IS NOT NULL
           AND ddav.DES_ATRIBUTO = 'Cadastro'
         GROUP BY YEAR(p.DAT_CADASTRO),
@@ -281,33 +271,33 @@ def fetch_process_registration_details_by_year_range(filters: YearRangeFilter):
         ORDER BY Ano
     """
     params = (
-        f"{filters.start_year}-01-01",
-        f"{filters.end_year}-01-01",
+        _serialize_date(filters.start_date),
+        _serialize_date(filters.end_date),
     )
     return run_query(sql, params)
 
 
-def fetch_by_origin_registration_last_six_months(filters: YearFilter):
+def fetch_by_origin_registration_last_six_months(filters: DateRangeFilter):
     return _fetch_origin_last_six_months(
         origin_name="Cadastro",
         total_alias="TotalCadastro",
-        year=filters.year,
+        filters=filters,
     )
 
 
-def fetch_by_origin_capture_last_six_months(filters: YearFilter):
+def fetch_by_origin_capture_last_six_months(filters: DateRangeFilter):
     return _fetch_origin_last_six_months(
         origin_name="Captura",
         total_alias="TotalCaptura",
-        year=filters.year,
+        filters=filters,
     )
 
 
-def fetch_by_origin_distribution_last_six_months(filters: YearFilter):
+def fetch_by_origin_distribution_last_six_months(filters: DateRangeFilter):
     return _fetch_origin_last_six_months(
         origin_name="Distribuição",
         total_alias="TotalDistribuicao",
-        year=filters.year,
+        filters=filters,
     )
 
 
